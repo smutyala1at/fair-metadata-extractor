@@ -17,6 +17,11 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: 'Research Metadata Analyzer - Extract Metadata from GitHub Repositories',
   description: 'Extract research metadata from GitHub repositories using advanced LLM analysis',
+  icons: {
+    icon: '/icon.svg',
+    apple: '/apple-icon.png',
+    shortcut: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({
