@@ -1,11 +1,11 @@
 import { cookies } from 'next/headers';
-import { type SerializeOptions as CookieOptions } from 'cookie'; // Changed import
+import { type SerializeOptions as CookieOptions } from 'cookie';
 
 const TOKEN_COOKIE_OPTIONS: CookieOptions = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
   sameSite: 'strict',
-  maxAge: 60 * 60 * 24 * 30, // 30 days
+  maxAge: 60 * 60 * 24 * 30,
   path: '/'
 };
 

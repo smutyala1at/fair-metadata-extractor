@@ -110,7 +110,7 @@ export default function TokenInput({ platform }: TokenInputProps) {
                     type={showToken ? 'text' : 'password'}
                     value={token}
                     onChange={(e) => setToken(e.target.value)}
-                    placeholder={`Enter ${isGithub ? 'GitHub' : 'GitLab'} token`}
+                    placeholder={`Enter ${isGithub ? 'GitHub' : 'GitLab'} token (optional)`}
                     className="pr-10"
                   />
                   <button

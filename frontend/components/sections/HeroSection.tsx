@@ -9,6 +9,7 @@ import { validateRepoUrl, getPlatformFromUrl } from "@/lib/validators";
 import FloatingMetadataCard from "@/components/ui/FloatingMetadataCard";
 import TokenInput from "@/components/ui/TokenInput";
 import AnalysisResults from "@/components/ui/AnalysisResults";
+import Logo from "../ui/Logo";
 
 export default function HeroSection() {
   const [repoUrl, setRepoUrl] = useState("");
@@ -83,12 +84,14 @@ export default function HeroSection() {
     <section className="relative w-full overflow-hidden px-4 py-20 sm:px-6 lg:px-8 lg:py-32">
       <div className="absolute inset-0 bg-gradient-to-b from-background to-secondary/20" />
       <div className="relative mx-auto max-w-5xl text-center">
+        <div className="flex justify-center mb-2">
+          <Logo animated={true} />
+        </div>
         <h1 className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-4xl font-bold tracking-tight text-transparent sm:text-5xl lg:text-6xl">
           Extract Research Metadata From Code Repositories
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-          Leverage advanced language models to automatically analyze and extract metadata 
-          from research projects hosted on GitHub or GitLab.
+          Enhancing research software discoverability through automated extraction of FAIR-compliant metadata using fine-tuned LLaMA model.
         </p>
         
         <form onSubmit={handleSubmit} className="mx-auto mt-10 max-w-2xl space-y-6">
@@ -154,7 +157,7 @@ export default function HeroSection() {
               delay={0.6}
               icon={<BookOpen className="h-5 w-5" />}
               data={{
-                type: "doi",
+                type: "DOI",
                 content: "10.1000/xyz123"
               }}
             />

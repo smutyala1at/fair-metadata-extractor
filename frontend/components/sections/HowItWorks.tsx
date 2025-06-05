@@ -8,12 +8,12 @@ export default function HowItWorks() {
     {
       icon: <Search className="h-10 w-10 text-blue-400" />,
       title: "Enter GitHub URL",
-      description: "Provide the URL of any public GitHub repository containing research code or documentation."
+      description: "Provide the URL of any public GitHub or GitLab repository containing research code or documentation."
     },
     {
       icon: <Cpu className="h-10 w-10 text-purple-400" />,
       title: "LLM Analysis",
-      description: "Our advanced language model analyzes the repository contents to extract relevant research metadata."
+      description: "Our fine-tuned language model analyzes the repository contents to extract relevant research metadata."
     },
     {
       icon: <FileText className="h-10 w-10 text-blue-400" />,

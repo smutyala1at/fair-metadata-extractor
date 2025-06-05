@@ -18,7 +18,10 @@ export const metadata: Metadata = {
   title: 'Research Metadata Analyzer - Extract Metadata from GitHub Repositories',
   description: 'Extract research metadata from GitHub repositories using advanced LLM analysis',
   icons: {
-    icon: '/icon.svg',
+    icon: [
+      { url: '/favicon.ico', sizes: '32x32', type: 'image/x-icon' },
+      { url: '/icon.svg', type: 'image/svg+xml' },
+    ],
     apple: '/apple-icon.png',
     shortcut: '/favicon.ico',
   },

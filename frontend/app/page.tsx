@@ -2,7 +2,7 @@ import HeroSection from "@/components/sections/HeroSection";
 import FeaturesGrid from "@/components/sections/FeaturesGrid";
 import HowItWorks from "@/components/sections/HowItWorks";
 import ResultsPreview from "@/components/sections/ResultsPreview";
-import CallToAction from "@/components/sections/CallToAction";
+import Community from "@/components/sections/Community";
 import { Toaster } from "@/components/ui/toaster";
 
 export default function Home() {
@@ -14,7 +14,7 @@ export default function Home() {
           <FeaturesGrid />
           <HowItWorks />
           <ResultsPreview />
-          <CallToAction />
+          <Community />
         </div>
       </div>
       <Toaster />

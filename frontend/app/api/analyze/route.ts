@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { extractGitHubContent, extractGitLabContent } from '@/lib/extractors';
+import { normalizeArrayField } from '@/lib/utils';
 
 export async function POST(request: Request) {
   try {
@@ -46,9 +47,19 @@ export async function POST(request: Request) {
 
       if (llmResult && typeof llmResult.response === 'string') {
         try {
-          responseData = JSON.parse(llmResult.response);
+          let cleanedResponse = llmResult.response;
+          cleanedResponse = cleanedResponse.replace(/\\'/g, "'");
+          cleanedResponse = cleanedResponse.replace(/\\"/g, '"');
+          
+          responseData = JSON.parse(cleanedResponse);
+          console.log('Successfully parsed LLM response as JSON');
         } catch (e) {
           console.error("Failed to parse LLM response string:", e);
+          responseData = {
+            parsingError: true,
+            message: "The metadata could not be properly parsed. Raw data is available.",
+            rawResponse: llmResult.response
+          };
         }
       } else if (llmResult && llmResult.data && typeof llmResult.data === 'object') {
         responseData = llmResult.data;
@@ -57,14 +68,33 @@ export async function POST(request: Request) {
       if (responseData && typeof responseData === 'object' && responseData !== null) {
         if (Object.prototype.hasOwnProperty.call(responseData, 'Installation_Instructions')) {
           const instructions = responseData.Installation_Instructions;
-          if (typeof instructions === 'string') {
-            responseData.InstallationInstructions = instructions.split('|').map(s => s.trim()).filter(s => s !== '');
-          } else if (Array.isArray(instructions)) {
-            responseData.InstallationInstructions = instructions.map(s => String(s).trim()).filter(s => s !== '');
-          } else {
-            responseData.InstallationInstructions = []; 
-          }
+          responseData.InstallationInstructions = normalizeArrayField(instructions);
           delete responseData.Installation_Instructions;
+        }
+        
+        const arrayFields = ['Authors', 'Contributors', 'Keywords', 'Dependencies', 'Funding', 'DOI', 'InstallationInstructions'];
+        for (const field of arrayFields) {
+          if (field in responseData) {
+            responseData[field] = normalizeArrayField(responseData[field]);
+          }
+        }
+        
+        for (const [key, value] of Object.entries(responseData)) {
+          const fieldName = key.replace(/_/g, ' ').toLowerCase();
+          
+          if (value === null) {
+            responseData[key] = `No ${fieldName} information available`;
+            continue;
+          }
+          
+          if (typeof value === 'string' && value.trim() === "") {
+            responseData[key] = `No ${fieldName} information available`;
+            continue;
+          }
+          
+          if (Array.isArray(value) && value.length === 0) {
+            responseData[key] = `No ${fieldName} information available`;
+          }
         }
       }
 

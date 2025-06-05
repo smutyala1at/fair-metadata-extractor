@@ -1,39 +1,39 @@
 "use client";
 
-import { BarChart2, Code, Github, Microscope, Zap, Award } from "lucide-react";
+import { BarChart2, Code, GitBranch, Microscope, Zap, Award } from "lucide-react";
 import FeatureCard from "@/components/ui/FeatureCard";
 
 export default function FeaturesGrid() {
   const features = [
     {
       icon: <Award className="h-10 w-10 text-blue-400" />,
-      title: "FAIR Metadata Extraction",
-      description: "Extract Findable, Accessible, Interoperable, and Reusable metadata from research repositories."
+      title: "FAIR Metadata Standards",
+      description: "Automatically extract Findable, Accessible, Interoperable, and Reusable metadata following established research data standards."
     },
     {
       icon: <Zap className="h-10 w-10 text-purple-400" />,
-      title: "LLM-Powered Analysis",
-      description: "Leverage advanced language models to understand research context and extract relevant metadata."
+      title: "AI-Powered Intelligence",
+      description: "Our language model analyze code structure, documentation, and context to generate comprehensive metadata insights."
     },
     {
-      icon: <Github className="h-10 w-10 text-blue-400" />,
-      title: "GitHub Integration",
-      description: "Seamlessly analyze any public GitHub repository with a simple URL input."
+      icon: <GitBranch className="h-10 w-10 text-blue-400" />,
+      title: "GitHub & GitLab Integration",
+      description: "Works with any public GitHub and GitLab repository - just paste a URL and get instant metadata analysis across all programming languages."
     },
     {
       icon: <Microscope className="h-10 w-10 text-purple-400" />,
-      title: "Research Focus",
-      description: "Optimized for academic and scientific repositories with special attention to research artifacts."
+      title: "Reproducibility Support",
+      description: "Automatically extract dependencies and installation guides to help researchers reproduce scientific work."
     },
     {
       icon: <BarChart2 className="h-10 w-10 text-blue-400" />,
-      title: "Instant Results",
-      description: "Get comprehensive metadata analysis in seconds without complex setup or configuration."
+      title: "Self-Hosted Deployment",
+      description: "Deploy our LLM model on Colab or Kaggle for complete control over your metadata extraction process."
     },
     {
       icon: <Code className="h-10 w-10 text-purple-400" />,
-      title: "Open Source",
-      description: "Built with transparency and community in mind. Contribute to improving research discoverability."
+      title: "Open Source Community",
+      description: "Fully open source with active community contributions. Help us improve research discoverability for everyone."
     }
   ];
 
@@ -42,14 +42,14 @@ export default function FeaturesGrid() {
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-4">
-            Powerful Features for Research Metadata
+            Decode Any Research Repository
           </h2>
           <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-            Our tool provides comprehensive metadata extraction designed specifically for research projects.
+            Extract comprehensive metadata from any research repository with our intelligent extraction tool designed specifically for the scientific community.
           </p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto auto-rows-fr">
           {features.map((feature, index) => (
             <FeatureCard 
               key={index} 

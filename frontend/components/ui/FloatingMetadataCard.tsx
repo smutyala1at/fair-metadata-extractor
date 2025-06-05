@@ -8,7 +8,7 @@ interface FloatingMetadataCardProps {
     bottom?: string;
     left?: string;
     right?: string;
-    transform?: string; // Added transform to position
+    transform?: string;
   };
   delay: number;
   icon: React.ReactNode;
