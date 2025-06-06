@@ -7,7 +7,7 @@ export default function HowItWorks() {
   const steps = [
     {
       icon: <Search className="h-10 w-10 text-blue-400" />,
-      title: "Enter GitHub URL",
+      title: "Enter Repository URL",
       description: "Provide the URL of any public GitHub or GitLab repository containing research code or documentation."
     },
     {
