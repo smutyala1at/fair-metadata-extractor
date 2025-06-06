@@ -30,7 +30,6 @@ const CITATION_FILES = new Set([
   "EndNote.xml", "RefMan.txt", "scopus.bib", "wos.bib", "pubmed.xml"
 ]);
 
-// GitHub Content Extractor
 async function fetchGitHubFileContent(url: string, token?: string): Promise<string | null> {
   const headers: HeadersInit = {
     Accept: 'application/vnd.github.v3+json',
@@ -114,12 +113,40 @@ export async function extractGitHubContent(repoUrl: string, token?: string): Pro
   return allContent.join(' ');
 }
 
-// GitLab Content Extractor
-async function extractGitLabProjectId(repoUrl: string): Promise<string | null> {
-  const res = await fetch(repoUrl);
-  const html = await res.text();
-  const match = html.match(/data-project-id="(\d+)"/);
-  return match ? match[1] : null;
+async function extractGitLabProjectId(repoUrl: string, token?: string): Promise<string | null> {
+  const url = new URL(repoUrl);
+  const apiBase = url.origin + '/api/v4';
+  const pathname = url.pathname.replace(/^\//, '').replace(/\.git$/, '');
+  
+  const headers: HeadersInit = {
+    'Accept': 'application/json'
+  };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  try {
+    const encodedPath = encodeURIComponent(pathname);
+    const projectApiUrl = `${apiBase}/projects/${encodedPath}`;
+    
+    console.log(`Trying GitLab API: ${projectApiUrl}`);
+    const res = await fetch(projectApiUrl, { headers });
+    
+    if (res.ok) {
+      const project = await res.json();
+      console.log(`Found project ID: ${project.id}`);
+      return project.id.toString();
+    } else {
+      console.warn(`GitLab API returned ${res.status}: ${res.statusText}`);
+      console.log('Using URL-encoded path as project ID');
+      return encodedPath;
+    }
+  } catch (e) {
+    console.warn('Strategy 1 failed (direct API call):', e);
+    const encodedPath = encodeURIComponent(pathname);
+    console.log('Using URL-encoded path as project ID');
+    return encodedPath;
+  }
 }
 
 export async function extractGitLabContent(repoUrl: string, token?: string): Promise<string> {

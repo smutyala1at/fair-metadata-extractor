@@ -44,26 +44,366 @@ export function normalizeArrayField(value: any): string[] {
   return [];
 }
 
-/**
- * Helper function to check if a field has valid data
- * Used to determine if a field should display "No information available"
- */
 export function hasValidData(value: any): boolean {
   if (value === undefined || value === null) return false;
   
   if (typeof value === 'string') {
-    // Check if it's a "No information" message
-    if (value.trim() === '' || value.toLowerCase().includes('no information')) return false;
+    const trimmed = value.trim();
+    if (trimmed === '' || 
+        trimmed === 'null' || 
+        trimmed === 'undefined' ||
+        trimmed.toLowerCase().includes('no information') ||
+        trimmed.toLowerCase().includes('not available') ||
+        trimmed.toLowerCase().includes('not found')) {
+      return false;
+    }
     return true;
   }
   
   if (Array.isArray(value)) {
     if (value.length === 0) return false;
-    // Check if the first item is a "No information" message
-    if (value.length === 1 && typeof value[0] === 'string' && 
-        value[0].toLowerCase().includes('no information')) return false;
-    return true;
+    
+    const validItems = value.filter(item => {
+      if (item === null || item === undefined) return false;
+      if (typeof item === 'string') {
+        const trimmed = item.trim();
+        return trimmed !== '' && 
+               trimmed !== 'null' && 
+               trimmed !== 'undefined' &&
+               !trimmed.toLowerCase().includes('no information') &&
+               !trimmed.toLowerCase().includes('not available') &&
+               !trimmed.toLowerCase().includes('not found');
+      }
+      return true;
+    });
+    
+    return validItems.length > 0;
   }
   
-  return false;
+  return true;
+}
+
+function robustJsonCleaner(jsonStr: string): string {
+  let preprocessed = jsonStr
+    .replace(/\\'/g, "'")
+    .replace(/\\\./g, ".");
+  
+  let result = '';
+  let insideString = false;
+  let escapeNext = false;
+  
+  for (let i = 0; i < preprocessed.length; i++) {
+    const char = preprocessed[i];
+    const charCode = char.charCodeAt(0);
+    
+    if (escapeNext) {
+      if (char === 'n') {
+        result += '\\n';
+      } else if (char === 'r') {
+        result += '\\r';
+      } else if (char === 't') {
+        result += '\\t';
+      } else if (char === '"') {
+        result += '\\"';
+      } else if (char === '\\') {
+        result += '\\\\';
+      } else if (char === '/') {
+        result += '\\/';
+      } else if (char === "'") {
+        result += "'";
+      } else {
+        result += '\\' + char;
+      }
+      escapeNext = false;
+      continue;
+    }
+    
+    if (char === '\\') {
+      escapeNext = true;
+      continue;
+    }
+    
+    if (char === '"' && !escapeNext) {
+      insideString = !insideString;
+      result += char;
+      continue;
+    }
+    
+    if (insideString) {
+      if (charCode < 32 || (charCode >= 127 && charCode < 160)) {
+        result += ' ';
+      } else if (char === "'") {
+        result += char;
+      } else if (char === "`") {
+        result += "'";
+      } else {
+        result += char;
+      }
+    } else {
+      if (charCode < 32 || (charCode >= 127 && charCode < 160)) {
+        if (result.length > 0 && result[result.length - 1] !== ' ') {
+          result += ' ';
+        }
+      } else {
+        result += char;
+      }
+    }
+  }
+  
+  result = normalizeJsonWhitespace(result);
+  
+  result = result
+    .replace(/,(\s*[}\]])/g, '$1')
+    .replace(/([}\]])(\s*)([^,\s}\]"])/g, '$1,$2$3');
+  
+  return result;
+}
+
+function normalizeJsonWhitespace(jsonStr: string): string {
+  let result = '';
+  let insideString = false;
+  let escapeNext = false;
+  
+  for (let i = 0; i < jsonStr.length; i++) {
+    const char = jsonStr[i];
+    
+    if (escapeNext) {
+      result += char;
+      escapeNext = false;
+      continue;
+    }
+    
+    if (char === '\\') {
+      result += char;
+      escapeNext = true;
+      continue;
+    }
+    
+    if (char === '"' && !escapeNext) {
+      insideString = !insideString;
+      result += char;
+      continue;
+    }
+    
+    if (insideString) {
+      result += char;
+    } else {
+      if (/\s/.test(char)) {
+        if (result.length > 0 && !/\s/.test(result[result.length - 1])) {
+          result += ' ';
+        }
+      } else {
+        result += char;
+      }
+    }
+  }
+  
+  return result.trim();
+}
+
+function validateJson(jsonStr: string): { valid: boolean; error?: string; position?: number; context?: string } {
+  try {
+    JSON.parse(jsonStr);
+    return { valid: true };
+  } catch (e) {
+    if (e instanceof SyntaxError) {
+      let position = -1;
+      const posMatch = e.message.match(/position (\d+)/i) || e.message.match(/at position (\d+)/i);
+      if (posMatch) {
+        position = parseInt(posMatch[1]);
+      }
+      
+      let context = '';
+      if (position > -1) {
+        const start = Math.max(0, position - 20);
+        const end = Math.min(jsonStr.length, position + 20);
+        context = jsonStr.substring(start, end);
+      }
+      
+      return {
+        valid: false,
+        error: e.message,
+        position,
+        context
+      };
+    }
+    return { valid: false, error: e instanceof Error ? e.message : 'Unknown error' };
+  }
+}
+
+export function cleanAndParseLLMResponse(llmResponse: any): any {
+  let responseData = llmResponse;
+
+  if (llmResponse && typeof llmResponse.response === 'string') {
+    try {
+      let cleanedResponse = robustJsonCleaner(llmResponse.response);
+      
+      const validation = validateJson(cleanedResponse);
+      if (!validation.valid) {
+        console.warn('⚠️ Initial cleaning validation failed:', validation.error);
+        if (validation.context) {
+          console.warn('Context around error:', JSON.stringify(validation.context));
+        }
+      }
+      
+      cleanedResponse = cleanedResponse.replace(
+        /"DOI":\s*([^,}]+)/g,
+        (_match: string, doiValue: string) => {
+          const trimmed = doiValue.trim();
+          if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
+            return `"DOI": ${trimmed}`;
+          }
+          return `"DOI": "${trimmed}"`;
+        }
+      );
+      
+      responseData = JSON.parse(cleanedResponse);
+      console.log('✅ Successfully parsed LLM response with robust cleaner');
+    } catch (e) {
+      console.error("❌ Robust cleaner failed:", e);
+      
+      if (e instanceof SyntaxError) {
+        console.error("SyntaxError details:", e.message);
+        
+        let errorPos = -1;
+        const posMatch = e.message.match(/position (\d+)/i) || e.message.match(/at position (\d+)/i);
+        if (posMatch) {
+          errorPos = parseInt(posMatch[1]);
+        }
+        
+        if (errorPos > -1) {
+          const robustCleaned = robustJsonCleaner(llmResponse.response);
+          console.error(`Error at position ${errorPos} in cleaned string`);
+          
+          const start = Math.max(0, errorPos - 30);
+          const end = Math.min(robustCleaned.length, errorPos + 30);
+          const snippet = robustCleaned.substring(start, end);
+          console.error("Context around error:", JSON.stringify(snippet));
+          
+          if (errorPos < robustCleaned.length) {
+            const problematicChar = robustCleaned[errorPos];
+            console.error(`Problematic character: '${problematicChar}' (code: ${problematicChar.charCodeAt(0)})`);
+          }
+        }
+      }
+      
+      try {
+        const jsonMatch = llmResponse.response.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          let extractedJson = robustJsonCleaner(jsonMatch[0]);
+          
+          extractedJson = extractedJson.replace(
+            /"DOI":\s*([^,}]+)/g,
+            (_match: string, doiValue: string) => {
+              const trimmed = doiValue.trim();
+              if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
+                return `"DOI": ${trimmed}`;
+              }
+              return `"DOI": "${trimmed}"`;
+            }
+          );
+          
+          responseData = JSON.parse(extractedJson);
+          console.log('✅ Successfully parsed with fallback extraction and robust cleaning');
+        } else {
+          throw new Error('No JSON found in response');
+        }
+      } catch (fallbackError) {
+        console.error("All parsing attempts failed:", fallbackError);
+        
+        try {
+          const salvageAttempt = attemptRegexSalvage(llmResponse.response);
+          if (salvageAttempt) {
+            responseData = salvageAttempt;
+            console.log('✅ Successfully salvaged data with regex approach');
+          } else {
+            throw new Error('Regex salvage failed');
+          }
+        } catch (salvageError) {
+          console.error("❌ Regex salvage also failed:", salvageError);
+          responseData = {
+            parsingError: true,
+            message: "The metadata could not be properly parsed. Raw data is available.",
+            rawResponse: llmResponse.response
+          };
+        }
+      }
+    }
+  } else if (llmResponse && llmResponse.data && typeof llmResponse.data === 'object') {
+    responseData = llmResponse.data;
+  }
+
+  return responseData;
+}
+
+function attemptRegexSalvage(response: string): any | null {
+  const result: any = {};
+  
+  const keyValuePattern = /"([^"]+)":\s*"([^"]*?)"/g;
+  const arrayPattern = /"([^"]+)":\s*\[([^\]]*)\]/g;
+  
+  let match;
+  
+  while ((match = keyValuePattern.exec(response)) !== null) {
+    const [, key, value] = match;
+    result[key] = value.replace(/\\n/g, ' ').trim();
+  }
+  
+  arrayPattern.lastIndex = 0;
+  while ((match = arrayPattern.exec(response)) !== null) {
+    const [, key, arrayContent] = match;
+    const items = arrayContent.split(',').map(item => 
+      item.replace(/"/g, '').trim()
+    ).filter(item => item.length > 0);
+    result[key] = items;
+  }
+  
+  return Object.keys(result).length > 0 ? result : null;
+}
+
+export function processResponseData(responseData: any): any {
+  if (!responseData || typeof responseData !== 'object' || responseData === null) {
+    return responseData;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(responseData, 'Installation_Instructions')) {
+    const instructions = responseData.Installation_Instructions;
+    responseData.InstallationInstructions = normalizeArrayField(instructions);
+    delete responseData.Installation_Instructions;
+  }
+  
+  const arrayFields = ['Authors', 'Contributors', 'Keywords', 'Dependencies', 'Funding', 'InstallationInstructions'];
+  for (const field of arrayFields) {
+    if (field in responseData) {
+      responseData[field] = normalizeArrayField(responseData[field]);
+    }
+  }
+  
+  for (const [key, value] of Object.entries(responseData)) {
+    let fieldName = key.replace(/([A-Z])/g, ' $1').trim().toLowerCase();
+    
+    if (key === 'DOI') {
+      fieldName = 'DOI';
+    } else if (key === 'InstallationInstructions') {
+      fieldName = 'installation instructions';
+    } else if (key === 'License') {
+      fieldName = 'license';
+    } else if (key === 'Keywords') {
+      fieldName = 'keywords';
+    } else if (key === 'Authors') {
+      fieldName = 'authors';
+    } else if (key === 'Contributors') {
+      fieldName = 'contributors';
+    } else if (key === 'Dependencies') {
+      fieldName = 'dependencies';
+    } else if (key === 'Funding') {
+      fieldName = 'funding';
+    }
+    
+    if (!hasValidData(value)) {
+      responseData[key] = `No ${fieldName} information available`;
+    }
+  }
+
+  return responseData;
 }

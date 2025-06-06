@@ -17,7 +17,7 @@ interface AnalysisResultsProps {
     parsingError?: boolean;
     message?: string;
     rawResponse?: string;
-    [key: string]: any; //additional fields
+    [key: string]: any;
   };
 }
 

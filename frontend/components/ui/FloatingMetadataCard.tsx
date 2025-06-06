@@ -24,7 +24,7 @@ export default function FloatingMetadataCard({ position, delay, icon, data }: Fl
       className="absolute glass-card p-4 rounded-lg shadow-lg cursor-grab active:cursor-grabbing"
       style={{
         ...position,
-        transform: typeof position === 'object' && position !== null && 'transform' in position ? (position as any).transform : undefined, // Added transform here
+        transform: typeof position === 'object' && position !== null && 'transform' in position ? (position as any).transform : undefined,
         maxWidth: '250px',
       }}
       initial={{ opacity: 0, scale: 0.8 }}

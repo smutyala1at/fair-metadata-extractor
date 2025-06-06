@@ -1,6 +1,9 @@
 export function validateRepoUrl(url: string): boolean {
-  const repoRegex = /^https?:\/\/(github\.com|gitlab\.com)\/[a-zA-Z0-9-]+\/[a-zA-Z0-9._-]+\/?$/;
-  return repoRegex.test(url);
+  const githubRegex = /^https?:\/\/github\.com\/[a-zA-Z0-9-]+\/[a-zA-Z0-9._-]+\/?$/;
+  
+  const gitlabRegex = /^https:\/\/[\w.-]+\/[\w.-]+(\/[\w.-]+)*\/?(?:\.git)?$/;
+  
+  return githubRegex.test(url) || gitlabRegex.test(url);
 }
 
 
@@ -19,6 +22,11 @@ export function validateGitlabToken(token: string): boolean {
 export function getPlatformFromUrl(url: string): 'github' | 'gitlab' | null {
   if (!url) return null;
   if (url.includes('github.com')) return 'github';
-  if (url.includes('gitlab.com')) return 'gitlab';
+  
+  const gitlabRegex = /^https:\/\/[\w.-]+\/[\w.-]+(\/[\w.-]+)*\/?(?:\.git)?$/;
+  if (gitlabRegex.test(url) && !url.includes('github.com')) {
+    return 'gitlab';
+  }
+  
   return null;
 }
