@@ -1,8 +1,10 @@
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
-import { Package, Users, FileText, Tag, Book, Coins, FileCode, Link } from "lucide-react";
+import { Package, Users, FileText, Tag, Book, Coins, FileCode, Link, Code } from "lucide-react";
 import { hasValidData } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface AnalysisResultsProps {
   data: {
@@ -22,6 +24,8 @@ interface AnalysisResultsProps {
 }
 
 export default function AnalysisResults({ data }: AnalysisResultsProps) {
+  const [showRawResponse, setShowRawResponse] = useState(false);
+  
   if (!data) {
     return null; 
   }
@@ -36,7 +40,7 @@ export default function AnalysisResults({ data }: AnalysisResultsProps) {
       >
         <Card className="glass-card border-0">
           <CardHeader className="space-y-1 bg-gradient-to-r from-red-500/10 to-orange-500/10 rounded-t-lg border-b border-border">
-            <CardTitle className="text-2xl text-primary">Repository Analysis Error</CardTitle>
+            <CardTitle className="text-2xl text-primary">Repository Metadata Extraction Error</CardTitle>
           </CardHeader>
           <CardContent className="p-6 space-y-6">
             <p className="text-muted-foreground">{data.message}</p>
@@ -61,7 +65,7 @@ export default function AnalysisResults({ data }: AnalysisResultsProps) {
     >
       <Card className="glass-card border-0">
         <CardHeader className="space-y-1 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-t-lg border-b border-border">
-          <CardTitle className="text-2xl text-primary">Repository Analysis Results</CardTitle>
+          <CardTitle className="text-2xl text-primary">Repository Metadata Extraction Results</CardTitle>
         </CardHeader>
         <CardContent className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -236,6 +240,30 @@ export default function AnalysisResults({ data }: AnalysisResultsProps) {
                 <p className="text-muted-foreground italic">No keyword information available.</p>
               )}
             </div>
+            
+            {/* Raw Response Toggle */}
+            {data.rawResponse && (
+              <div className="col-span-full mt-4 pt-4 border-t border-border">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setShowRawResponse(!showRawResponse)}
+                  className="flex items-center gap-2"
+                >
+                  <Code className="h-4 w-4" />
+                  {showRawResponse ? "Hide Raw Response" : "Show Raw Response"}
+                </Button>
+                
+                {showRawResponse && (
+                  <div className="mt-4 bg-secondary/50 p-3 rounded-md">
+                    <h3 className="font-semibold mb-2">Raw Response</h3>
+                    <pre className="text-xs overflow-auto max-h-[300px] whitespace-pre-wrap">
+                      {data.rawResponse}
+                    </pre>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

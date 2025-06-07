@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { extractGitHubContent, extractGitLabContent } from '@/lib/extractors';
-import { cleanAndParseLLMResponse, processResponseData } from '@/lib/utils';
+import { processRepositoryData } from '@/lib/utils';
 
 export async function POST(request: Request) {
   try {
@@ -43,25 +43,26 @@ export async function POST(request: Request) {
       const llmResult = await llmResponse.json();
       console.log('LLM API response:', llmResult);
       
-      let responseData = cleanAndParseLLMResponse(llmResult);
+      const { success, responseData, formattedRawResponse, message } = processRepositoryData(llmResult);
       
-      responseData = processResponseData(responseData);
-
       return NextResponse.json({
-        success: true,
-        data: responseData, 
+        success,
+        data: responseData,
+        parsingError: !success,
+        message,
+        rawResponse: formattedRawResponse
       });
 
     } catch (llmError) {
       console.error('Error calling LLM API:', llmError);
       return NextResponse.json(
-        { error: llmError instanceof Error ? llmError.message : 'Failed to get analysis from LLM' },
+        { error: llmError instanceof Error ? llmError.message : 'Failed to get results from LLM' },
         { status: 500 }
       );
     }
 
   } catch (error) {
-    console.error('Analysis error:', error);
+    console.error('Extraction error:', error);
     return NextResponse.json(
       { error: 'Failed to analyze repository' },
       { status: 500 }

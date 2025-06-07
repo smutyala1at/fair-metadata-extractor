@@ -240,7 +240,7 @@ export function cleanAndParseLLMResponse(llmResponse: any): any {
       
       const validation = validateJson(cleanedResponse);
       if (!validation.valid) {
-        console.warn('⚠️ Initial cleaning validation failed:', validation.error);
+        console.warn('Initial cleaning validation failed:', validation.error);
         if (validation.context) {
           console.warn('Context around error:', JSON.stringify(validation.context));
         }
@@ -258,9 +258,9 @@ export function cleanAndParseLLMResponse(llmResponse: any): any {
       );
       
       responseData = JSON.parse(cleanedResponse);
-      console.log('✅ Successfully parsed LLM response with robust cleaner');
+      console.log('Successfully parsed LLM response with robust cleaner');
     } catch (e) {
-      console.error("❌ Robust cleaner failed:", e);
+      console.error("Robust cleaner failed:", e);
       
       if (e instanceof SyntaxError) {
         console.error("SyntaxError details:", e.message);
@@ -304,7 +304,7 @@ export function cleanAndParseLLMResponse(llmResponse: any): any {
           );
           
           responseData = JSON.parse(extractedJson);
-          console.log('✅ Successfully parsed with fallback extraction and robust cleaning');
+          console.log('Successfully parsed with fallback extraction and robust cleaning');
         } else {
           throw new Error('No JSON found in response');
         }
@@ -315,12 +315,12 @@ export function cleanAndParseLLMResponse(llmResponse: any): any {
           const salvageAttempt = attemptRegexSalvage(llmResponse.response);
           if (salvageAttempt) {
             responseData = salvageAttempt;
-            console.log('✅ Successfully salvaged data with regex approach');
+            console.log('Successfully salvaged data with regex approach');
           } else {
             throw new Error('Regex salvage failed');
           }
         } catch (salvageError) {
-          console.error("❌ Regex salvage also failed:", salvageError);
+          console.error("Regex salvage also failed:", salvageError);
           responseData = {
             parsingError: true,
             message: "The metadata could not be properly parsed. Raw data is available.",
@@ -406,4 +406,128 @@ export function processResponseData(responseData: any): any {
   }
 
   return responseData;
+}
+
+export function cleanHtmlFromFields(obj: any): any {
+  if (!obj) return obj;
+  
+  for (const key in obj) {
+    if (typeof obj[key] === 'string') {
+      obj[key] = obj[key]
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/&lt;/gi, '<')
+        .replace(/&gt;/gi, '>')
+        .replace(/&amp;/gi, '&')
+        .replace(/&quot;/gi, '"')
+        .replace(/&#39;/gi, "'")
+        .replace(/<[^>]*>/g, '')
+        .trim();
+    } else if (Array.isArray(obj[key])) {
+      obj[key] = obj[key].map((item: any) => {
+        if (typeof item === 'string') {
+          return item
+            .replace(/<br\s*\/?>/gi, '\n')
+            .replace(/&nbsp;/gi, ' ')
+            .replace(/&lt;/gi, '<')
+            .replace(/&gt;/gi, '>')
+            .replace(/&amp;/gi, '&')
+            .replace(/&quot;/gi, '"')
+            .replace(/&#39;/gi, "'")
+            .replace(/<[^>]*>/g, '')
+            .trim();
+        } else if (typeof item === 'object' && item !== null) {
+          return cleanHtmlFromFields(item);
+        }
+        return item;
+      });
+    } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+      obj[key] = cleanHtmlFromFields(obj[key]);
+    }
+  }
+  return obj;
+}
+
+export function extractInstallationInstructions(response: string): string | null {
+  const installMatch = response.match(/Installation[_\s]Instructions[:\s]+([\s\S]+?)(?=\n\s*\n\s*[A-Z]|$)/i);
+  return installMatch && installMatch[1] ? installMatch[1].trim() : null;
+}
+
+export function cleanEmptyDOI(data: any): any {
+  if (data && data.DOI && Array.isArray(data.DOI) && data.DOI.length === 0) {
+    const cleanedData = { ...data };
+    delete cleanedData.DOI;
+    return cleanedData;
+  }
+  return data;
+}
+
+export function formatRawResponse(response: string | null): string | null {
+  if (!response) return null;
+  
+  return response
+    .replace(/\\n/g, '\n')
+    .replace(/\\"/g, '"')
+    .replace(/\\\\/g, '\\');
+}
+
+export function processRepositoryData(llmResult: any): { 
+  responseData: any, 
+  formattedRawResponse: string | null,
+  success: boolean,
+  message?: string 
+} {
+  try {
+    // Step 1: Parse the LLM response
+    let responseData = cleanAndParseLLMResponse(llmResult);
+    
+    // Step 2: Extract installation instructions if needed
+    if (!responseData.InstallationInstructions && 
+        !responseData.Installation_Instructions && 
+        llmResult.response && 
+        typeof llmResult.response === 'string') {
+      
+      const instructions = extractInstallationInstructions(llmResult.response);
+      if (instructions) {
+        responseData.Installation_Instructions = instructions;
+      }
+    }
+    
+    // Step 3: Clean HTML from all fields
+    responseData = cleanHtmlFromFields(responseData);
+    
+    // Step 4: Process the response data (normalizing arrays, etc.)
+    responseData = processResponseData(responseData);
+    
+    // Step 5: Handle empty DOI arrays
+    responseData = cleanEmptyDOI(responseData);
+    
+    // Format the raw response for display
+    const formattedRawResponse = formatRawResponse(
+      llmResult.response && typeof llmResult.response === 'string' ? llmResult.response : null
+    );
+    
+    return {
+      success: true,
+      responseData,
+      formattedRawResponse
+    };
+    
+  } catch (error) {
+    console.error('Error processing repository data:', error);
+    
+    const formattedRawResponse = formatRawResponse(
+      llmResult.response && typeof llmResult.response === 'string' ? llmResult.response : null
+    );
+    
+    return {
+      success: false,
+      responseData: {
+        parsingError: true,
+        message: "Failed to parse the metadata properly. Raw response is available below."
+      },
+      formattedRawResponse,
+      message: 'Failed to parse the metadata properly. Raw response is available below.'
+    };
+  }
 }

@@ -135,6 +135,45 @@ The request body should include:
 
 The application connects to an external LLM API hosted and exposed via ngrok. Make sure to update the `LLM_API_URL` and `LLM_MODEL_NAME` in your `.env` file if the ngrok URL changes.
 
+## Further Development and Contributions
+
+Contributions to this project are warmly welcomed! Feel free to fork the repository, make improvements, and submit pull requests. Here are some ways you can contribute:
+
+### Fine-tuning the Model
+
+The project uses a Llama 3.1 8B model that has already been fine-tuned for metadata extraction, which contributors can enhance further:
+
+1. Feel free to experiment with the [smutyala1at/metadata_extractor](https://huggingface.co/smutyala/metadata_extractor) fine-tuned model
+2. Create your own training datasets for specific research domains or repository types
+3. Further fine-tune the model using Unsloth/Hugging Face's training pipeline or your preferred method
+4. Share your improvements with the community to help advance research metadata extraction
+
+### Extending the Frontend
+
+The Next.js frontend can be extended in several ways:
+
+- Add support for additional repository hosting platforms (BitBucket, GitLab self-hosted)
+- Create export options for the metadata in various formats (CSV, JSON)
+
+### Improving the Extraction Pipeline
+
+The extraction pipeline can be enhanced for better performance:
+
+- Add caching mechanisms for previously analyzed repositories
+- Implement concurrent processing for faster analysis
+- Add support for analyzing specific branches or tags
+
+### Community Collaboration
+
+This project aims to be community-driven:
+
+- If you have ideas for new features, open an issue to discuss them
+- For bugs or issues, please report them with detailed steps to reproduce
+- Share your experience using the tool with different types of repositories
+- Suggest improvements to the training data or model architecture
+
+All contributions, whether code, documentation, or ideas, are greatly appreciated! Feel free to get involved in whatever way you can.
+
 ## License
 
 [MIT](LICENSE)

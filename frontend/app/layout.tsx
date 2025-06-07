@@ -15,7 +15,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Research Metadata Analyzer - Extract Metadata from GitHub Repositories',
+  title: 'Research Metadata Analyzer - Extract Metadata from Code Repositories',
   description: 'Extract research metadata from GitHub repositories using advanced LLM analysis',
   icons: {
     icon: [

@@ -59,17 +59,17 @@ export default function HeroSection() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Analysis failed');
+        throw new Error(data.error || 'Extraction failed');
       }
 
       setAnalysisResults(data.data);
       toast({
-        title: "Analysis complete",
+        title: "Extraction complete",
         description: "Repository metadata has been extracted successfully",
       });
     } catch (error) {
       toast({
-        title: "Analysis failed",
+        title: "Extraction failed",
         description: error instanceof Error ? error.message : "An unknown error occurred",
         variant: "destructive",
       });
@@ -119,11 +119,11 @@ export default function HeroSection() {
             >
               {isLoading ? (
                 <span className="flex items-center">
-                  <span className="mr-2 animate-spin">⟳</span> Analyzing...
+                  <span className="mr-2 animate-spin">⟳</span> Extracting...
                 </span>
               ) : (
                 <span className="flex items-center">
-                  Analyze <ArrowRight className="ml-2 h-5 w-5" />
+                  Extract <ArrowRight className="ml-2 h-5 w-5" />
                 </span>
               )}
             </Button>

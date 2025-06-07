@@ -18,7 +18,7 @@ export default function FeaturesGrid() {
     {
       icon: <GitBranch className="h-10 w-10 text-blue-400" />,
       title: "GitHub & GitLab Integration",
-      description: "Works with any public GitHub and GitLab repository - just paste a URL and get instant metadata analysis across all programming languages."
+      description: "Works with any public GitHub and GitLab repository - just paste a URL and get instant metadata extraction across all programming languages."
     },
     {
       icon: <Microscope className="h-10 w-10 text-purple-400" />,
